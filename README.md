@@ -66,9 +66,7 @@ These findings suggest that LMARENA's scores might be significantly influenced b
 
 For researchers and industry observers, this raises important questions about the reliability of current LLM benchmarking methods and highlights the need for more robust evaluation systems.
 
-## An Interesting Case Study: Claude
-
-Our analysis revealed an interesting observation about Claude's performance on LMARENA. Despite being widely regarded as a top-tier model, it doesn't score particularly well on the platform. This could potentially be explained by Anthropic employees being less active on LMARENA compared to other companies.
+One more hand-wavy point: Despite Claude being widely regarded as a top-tier model, it doesn't score particularly well on the platform. This could potentially be explained by Anthropic employees caring less about LMARENA compared to other companies.
 
 
 ## Mitigating Bias
