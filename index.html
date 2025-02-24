@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LMARENA.AI CHEATING GAME</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .api-key-section {
+            margin-bottom: 20px;
+        }
+        .response-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: flex;
+            gap: 20px;
+        }
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .response-box {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 0;
+            cursor: move;
+            user-select: none;
+        }
+        .response-box.dragging {
+            opacity: 0.5;
+        }
+        .selected {
+            border: 2px solid blue;
+        }
+        #stats {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .mode-switch {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .api-only-box {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 0;
+            text-align: center;
+            font-weight: bold;
+            cursor: move;
+            user-select: none;
+        }
+        .api-only-box.dragging {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>LMARENA.AI CHEATING GAME</h1>
+    
+    <div style="margin-bottom: 20px; line-height: 1.5;">
+        <p>Test your ability to identify AI responses from different APIs! Each API will generate two responses to your prompt.</p>
+        
+        <p><strong>Normal Mode:</strong> Two independent responses from each API are split between the left and right columns. 
+        Drag responses up and down <em>within their column</em> to match pairs from the same API. 
+        Click "Check Order" to see if you matched them correctly.</p>
+        
+        <p><strong>Hard Mode:</strong> The left column contains responses without labels, and the right column shows only API names. 
+        Drag the responses in the left column to match the API labels on the right. This mode tests your ability to identify each AI's unique characteristics!</p>
+    </div>
+
+    <div class="api-key-section">
+        <label>Gemini API Key for Gemini-1.5-Flash:</label>
+        <input type="password" id="geminiKey" placeholder="Enter Gemini API key">
+        <br><br>
+        <label>OpenAI API Key for GPT-4o:</label>
+        <input type="password" id="openaiKey" placeholder="Enter OpenAI API key">
+        <br><br>
+        <label>xAI API Key for Grok-2-Latest:</label>
+        <input type="password" id="xaiKey" placeholder="Enter xAI API key">
+    </div>
+
+    <div class="mode-switch">
+        <label>
+            <input type="checkbox" id="hardMode" onchange="toggleMode()">
+            Hard Mode (Match responses to API labels)
+        </label>
+    </div>
+
+    <div>
+        <textarea id="userPrompt" rows="4" cols="50" placeholder="Enter your message here"></textarea>
+        <br>
+        <button onclick="getResponses()">Get Responses</button>
+    </div>
+
+    <div id="responses" class="response-container">
+        <div id="column1" class="column"></div>
+        <div id="column2" class="column"></div>
+    </div>
+    <button id="checkButton" style="display: none;" onclick="checkAnswers()">Check Order</button>
+    
+    <div id="stats"></div>
+
+    <script>
+        let currentResponses = [];
+        let selectedBoxes = [];
+        let totalAttempts = 0;
+        let correctAttempts = 0;
+        let isHardMode = false;
+
+        // Add event listener for textarea
+        document.getElementById('userPrompt').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Allow new line with Shift+Enter
+                    return;
+                } else {
+                    // Prevent default newline and trigger response
+                    e.preventDefault();
+                    getResponses();
+                }
+            }
+        });
+
+        // Load saved API keys when page loads
+        window.onload = function() {
+            const geminiKey = localStorage.getItem('geminiKey') || '';
+            const openaiKey = localStorage.getItem('openaiKey') || '';
+            const xaiKey = localStorage.getItem('xaiKey') || '';
+
+            document.getElementById('geminiKey').value = geminiKey;
+            document.getElementById('openaiKey').value = openaiKey;
+            document.getElementById('xaiKey').value = xaiKey;
+        };
+
+        // Save API keys when they change
+        document.getElementById('geminiKey').addEventListener('change', function() {
+            localStorage.setItem('geminiKey', this.value);
+        });
+
+        document.getElementById('openaiKey').addEventListener('change', function() {
+            localStorage.setItem('openaiKey', this.value);
+        });
+
+        document.getElementById('xaiKey').addEventListener('change', function() {
+            localStorage.setItem('xaiKey', this.value);
+        });
+
+        // Clear stats (but not API keys) when window is closed or refreshed
+        window.onbeforeunload = function() {
+            totalAttempts = 0;
+            correctAttempts = 0;
+        };
+
+        async function getResponses() {
+            const getResponsesButton = document.querySelector('button[onclick="getResponses()"]');
+            const checkButton = document.getElementById('checkButton');
+            
+            // Disable both buttons
+            getResponsesButton.disabled = true;
+            getResponsesButton.style.backgroundColor = '#ccc';
+            getResponsesButton.style.cursor = 'not-allowed';
+            getResponsesButton.textContent = 'Getting Responses...';
+            
+            checkButton.style.display = 'none';
+
+            const geminiKey = document.getElementById('geminiKey').value;
+            const openaiKey = document.getElementById('openaiKey').value;
+            const xaiKey = document.getElementById('xaiKey').value;
+            const prompt = document.getElementById('userPrompt').value;
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                // Re-enable get responses button
+                getResponsesButton.disabled = false;
+                getResponsesButton.style.backgroundColor = '';
+                getResponsesButton.style.cursor = 'pointer';
+                getResponsesButton.textContent = 'Get Responses';
+                return;
+            }
+
+            try {
+                // Initialize responses array
+                currentResponses = [];
+                
+                // Create array of promises for APIs with provided keys
+                const promises = [];
+                
+                if (geminiKey) {
+                    promises.push(getGeminiResponses(prompt, geminiKey).then(responses => {
+                        currentResponses.push(
+                            { text: responses[0], api: 'gemini', model: 'gemini-1.5-flash', id: 1 },
+                            { text: responses[1], api: 'gemini', model: 'gemini-1.5-flash', id: 2 }
+                        );
+                    }));
+                }
+                
+                if (openaiKey) {
+                    promises.push(getOpenAIResponses(prompt, openaiKey).then(responses => {
+                        currentResponses.push(
+                            { text: responses[0], api: 'openai', id: 3 },
+                            { text: responses[1], api: 'openai', id: 4 }
+                        );
+                    }));
+                }
+                
+                if (xaiKey) {
+                    promises.push(getXAIResponses(prompt, xaiKey).then(responses => {
+                        currentResponses.push(
+                            { text: responses[0], api: 'xai', id: 5 },
+                            { text: responses[1], api: 'xai', id: 6 }
+                        );
+                    }));
+                }
+
+                // Wait for all API calls to complete in parallel
+                await Promise.all(promises);
+
+                // Log all responses to console
+                console.group('AI Responses');
+                currentResponses.forEach((response, index) => {
+                    console.group(`Response ${index + 1}`);
+                    console.log('API:', response.api.toUpperCase());
+                    console.log('Response:', response.text);
+                    console.groupEnd();
+                });
+                console.groupEnd();
+
+                if (currentResponses.length < 4) {
+                    alert('Please provide at least 2 API keys to play the game');
+                    return;
+                }
+
+                // Shuffle responses
+                currentResponses.sort(() => Math.random() - 0.5);
+                displayResponses();
+                
+                // Show check button after responses are displayed
+                checkButton.style.display = 'block';
+            } catch (error) {
+                console.error('Error getting responses:', error);
+                alert('Error getting responses: ' + error.message);
+            } finally {
+                // Re-enable get responses button
+                getResponsesButton.disabled = false;
+                getResponsesButton.style.backgroundColor = '';
+                getResponsesButton.style.cursor = 'pointer';
+                getResponsesButton.textContent = 'Get Responses';
+            }
+        }
+
+        async function getGeminiResponses(prompt, key) {
+            const responses = [];
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            for (let i = 0; i < 2; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    responses.push(data.candidates[0].content.parts[0].text);
+                } catch (error) {
+                    console.error('Error calling Gemini API:', error);
+                    responses.push('Error getting response from Gemini');
+                }
+            }
+            return responses;
+        }
+
+        async function getOpenAIResponses(prompt, key) {
+            const responses = [];
+            for (let i = 0; i < 2; i++) {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [{role: 'user', content: prompt}],
+                        temperature: 0.7
+                    })
+                });
+                const data = await response.json();
+                responses.push(data.choices[0].message.content);
+            }
+            return responses;
+        }
+
+        async function getXAIResponses(prompt, key) {
+            const responses = [];
+            for (let i = 0; i < 2; i++) {
+                const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are a helpful assistant.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        model: 'grok-2-latest',
+                        stream: false,
+                        temperature: 0
+                    })
+                });
+                const data = await response.json();
+                responses.push(data.choices[0].message.content);
+            }
+            return responses;
+        }
+
+        function toggleMode() {
+            isHardMode = document.getElementById('hardMode').checked;
+            if (currentResponses.length > 0) {
+                displayResponses(); // Refresh display if there are responses
+            }
+        }
+
+        function displayResponses() {
+            const column1 = document.getElementById('column1');
+            const column2 = document.getElementById('column2');
+            column1.innerHTML = '';
+            column2.innerHTML = '';
+
+            // Create arrays for each API type
+            const responsesByApi = {};
+            currentResponses.forEach(response => {
+                if (!responsesByApi[response.api]) {
+                    responsesByApi[response.api] = [];
+                }
+                responsesByApi[response.api].push(response);
+            });
+
+            // Distribute responses
+            const column1Responses = [];
+            const column2Responses = [];
+            
+            Object.values(responsesByApi).forEach(apiResponses => {
+                column1Responses.push(apiResponses[0]);
+                column2Responses.push(apiResponses[1]);
+            });
+
+            // Shuffle column 1 responses
+            column1Responses.sort(() => Math.random() - 0.5);
+
+            // Display responses in columns
+            column1Responses.forEach((response, index) => {
+                const box = createDraggableBox(response, index);
+                box.dataset.api = response.api;
+                box.dataset.model = response.model || '';
+                box.dataset.text = response.text;
+                column1.appendChild(box);
+            });
+
+            // For hard mode, show API labels in column 2 and make them draggable
+            if (isHardMode) {
+                column2Responses.forEach((response, index) => {
+                    const box = document.createElement('div');
+                    box.className = 'api-only-box';
+                    box.draggable = true;
+                    box.dataset.index = index + column1Responses.length;
+                    const label = createApiLabel(response.api);
+                    box.appendChild(label);
+                    box.dataset.api = response.api;
+                    column2.appendChild(box);
+                });
+            } else {
+                column2Responses.forEach((response, index) => {
+                    const box = createDraggableBox(response, index + column1Responses.length);
+                    box.dataset.api = response.api;
+                    box.dataset.model = response.model || '';
+                    box.dataset.text = response.text;
+                    column2.appendChild(box);
+                });
+            }
+
+            document.getElementById('checkButton').style.display = 'block';
+            setupDragAndDrop();
+        }
+
+        function createDraggableBox(response, index) {
+            const box = document.createElement('div');
+            box.className = 'response-box';
+            box.textContent = response.text;
+            box.draggable = true;
+            box.dataset.index = index;
+            box.style.cssText += `
+                position: relative;
+                transition: border-color 0.3s ease;
+            `;
+            return box;
+        }
+
+        function setupDragAndDrop() {
+            const boxes = document.querySelectorAll('.response-box, .api-only-box');
+            const columns = document.querySelectorAll('.column');
+
+            boxes.forEach(box => {
+                box.addEventListener('dragstart', handleDragStart);
+                box.addEventListener('dragend', handleDragEnd);
+            });
+
+            columns.forEach(column => {
+                column.addEventListener('dragover', handleDragOver);
+                column.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', e.target.dataset.index);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const column = e.target.closest('.column');
+            
+            // Only allow drop if the dragged element originated from the same column
+            const draggedElement = document.querySelector(`[data-index="${draggedIndex}"]`);
+            const sourceColumn = draggedElement.closest('.column');
+            
+            if (sourceColumn === column) {
+                const boxes = Array.from(column.children);
+                const afterElement = getDragAfterElement(column, e.clientY);
+                
+                if (afterElement) {
+                    column.insertBefore(draggedElement, afterElement);
+                } else {
+                    column.appendChild(draggedElement);
+                }
+            }
+        }
+
+        function getDragAfterElement(column, y) {
+            const draggableElements = [...column.querySelectorAll('.response-box:not(.dragging), .api-only-box:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function checkAnswers() {
+            const column1Boxes = Array.from(document.getElementById('column1').children);
+            const column2Boxes = Array.from(document.getElementById('column2').children);
+            
+            totalAttempts++;
+            let allCorrect = true;
+
+            // Reset any previous styling
+            document.querySelectorAll('.response-box, .api-only-box').forEach(box => {
+                box.style.border = '';
+                if (box.classList.contains('response-box') && box.querySelector('.api-label')) {
+                    box.querySelector('.api-label').remove();
+                }
+            });
+
+            // Check matches and show API sources
+            for (let i = 0; i < column1Boxes.length; i++) {
+                const response1 = {
+                    api: column1Boxes[i].dataset.api,
+                    model: column1Boxes[i].dataset.model,
+                    text: column1Boxes[i].dataset.text
+                };
+                const response2 = {
+                    api: column2Boxes[i].dataset.api,
+                    model: column2Boxes[i].dataset.model,
+                    text: column2Boxes[i].dataset.text
+                };
+                
+                // Create and add API labels
+                const label1 = createApiLabel(response1.api);
+                const label2 = createApiLabel(response2.api);
+                
+                column1Boxes[i].insertBefore(label1, column1Boxes[i].firstChild);
+                column2Boxes[i].insertBefore(label2, column2Boxes[i].firstChild);
+
+                // Style the boxes based on match
+                if (response1.api === response2.api) {
+                    column1Boxes[i].style.border = '2px solid green';
+                    column2Boxes[i].style.border = '2px solid green';
+                } else {
+                    column1Boxes[i].style.border = '2px solid red';
+                    column2Boxes[i].style.border = '2px solid red';
+                    allCorrect = false;
+                }
+            }
+
+            if (allCorrect) {
+                correctAttempts++;
+            }
+
+            updateStats();
+        }
+
+        function createApiLabel(api) {
+            const label = document.createElement('div');
+            label.className = 'api-label';
+            label.textContent = api.toUpperCase();
+            
+            // Define colors for each API
+            const apiColors = {
+                'openai': '#10a37f', // OpenAI's brand green
+                'gemini': '#1a73e8', // Google blue
+                'xai': '#000000' // xAI black
+            };
+            
+            label.style.cssText = `
+                background-color: ${apiColors[api] || '#333'};
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                margin-bottom: 5px;
+                font-size: 12px;
+                display: inline-block;
+            `;
+            return label;
+        }
+
+        function updateStats() {
+            const accuracy = (correctAttempts / totalAttempts * 100).toFixed(1);
+            document.getElementById('stats').textContent = 
+                `Accuracy: ${accuracy}% (${correctAttempts}/${totalAttempts})`;
+        }
+
+        // Add styles for draggable API labels
+        function addButtonStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                button {
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 4px;
+                    background-color: #4CAF50;
+                    color: white;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                button:hover:not(:disabled) {
+                    background-color: #45a049;
+                }
+                button:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                }
+                .api-only-box {
+                    background-color: #f5f5f5;
+                    padding: 10px;
+                    margin: 0;
+                    text-align: center;
+                    font-weight: bold;
+                    cursor: move;
+                    user-select: none;
+                }
+                .api-only-box.dragging {
+                    opacity: 0.5;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        addButtonStyles();
+    </script>
+</body>
+</html>
