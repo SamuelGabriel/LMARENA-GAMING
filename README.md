@@ -12,7 +12,7 @@ Its approach is straightforward: users interact with two anonymous LLMs through 
 In exchange for free access to the LLMs, users agree to their data potentially being made public.
 
 However, this has become less attractive for the average user, as free yet powerful models like Claude 3.5 Sonnet and ChatGPT-4o are now available.
-This might be why the benchmark relies on a relatively small number of votes (for example, Grok 3 has only 10,000 votes at the moment).
+This might be why the benchmark relies on a relatively small number of votes (for example, Grok 3 has only 10,000 votes at the moment), which makes it susceptible to manipulation.
 
 ## Two Hypotheses
 
