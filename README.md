@@ -133,6 +133,8 @@ year = {2025}
 - when was the u-bahn in berlin build and was it build inside the city at the time or outside?
 - when was kreuzberg build? is it a new part of berlin, comparably?
 - how can i find the tangent of a polynomial?
+  
+(I missed to note the first few questions, sorry.)
 
 ## Hard Mode Questions
 
