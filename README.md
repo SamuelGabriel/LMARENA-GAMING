@@ -1,6 +1,6 @@
-# Are LMARENA.AI Scores Skewed by Industry Insiders?
+# Are LMARENA.ai Scores Skewed by Industry Insiders?
 
-LMARENA.AI is one of the most trusted benchmarks for Large Language Models (LLMs).
+LMARENA.ai is one of the most trusted benchmarks for Large Language Models (LLMs).
 However, we believe its scores may be skewed.
 We investigate two potential scenarios: deliberate manipulation and unintentional bias.
 To explore this, we created a game testing people's ability to identify responses from different LLMs.
