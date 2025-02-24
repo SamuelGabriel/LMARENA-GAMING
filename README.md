@@ -11,25 +11,24 @@ LMARENA.AI has gained significant trust within the AI community, including among
 Its approach is straightforward: users interact with two anonymous LLMs through a chat interface and vote on which one they prefer.
 In exchange for free access to the LLMs, users agree to their data potentially being made public.
 
-However, recent developments in the LLM landscape have changed the dynamics:
-
-- With free yet powerful models like Claude 3.5 Sonnet and ChatGPT-4o now available, regular users have less incentive to use LMARENA's interface
-- The benchmark relies on a relatively small number of votes (for example, Grok 3 has only 10,000 votes)
-- Newer models appear to accumulate votes more quickly than older ones, thus users are more likely to vote for the newest models
+This recently became much less attractive for the average user, though, as free yet powerful models like Claude 3.5 Sonnet and ChatGPT-4o now available.
+This might be one of the reasons Tte benchmark relies on a relatively small number of votes (for example, Grok 3 has only 10,000 votes atm).
 
 ## Two Hypotheses
 
 ### 1. Unintentional Bias from Industry Employees
 
-The first hypothesis suggests that employees of LLM companies might be inadvertently influencing the scores. For perspective, if half of the employees of a company like OpenAI that has around 2,000 employees, voted just once per day, they would account for more than 10% of all votes on LMARENA (2.7M) over its one-year existence.
+The first hypothesis suggests that employees of LLM companies might be inadvertently influencing the scores. For perspective, if half of the employees of a company like OpenAI that has around 2,000 employees, voted just once per day on lmarena, they would account for more than 10% of all votes on LMARENA (2.7M) over its one-year existence.
+We conducted an experiment how easy it is to get a gut feeling for the "personalities" of different LLMs.
 
 ### 2. Deliberate Benchmark Gaming
 
-A more concerning hypothesis suggests that companies might be actively attempting to manipulate the benchmark scores. While this might sound conspiratorial, we conducted an experiment to test how easily one could identify different LLMs, without privileged access at any LLM company.
+Under the assumption of ill-intention, which seems unlikely, companies might be actively attempting to manipulate the benchmark scores. We conducted an experiment to test how easily one could identify different LLMs, without privileged access at any LLM company.
 
 ## The Model Identification Experiment
 
-I created a game, see [here](TODO) with two modes to test how easily LLMs could be distinguished:
+I created a game, which you can play by opening [this](https://github.com/SamuelGabriel/LMARENA-GAMING/blob/main/index.html) html on your machine.
+It has two modes to test how easily LLMs could be distinguished on LMARENA in different scenarios:
 
 **Easy Mode**: Players were shown two responses from each of three LLMs (Grok-2, GPT-4o, and Gemini 1.5 Flash) and had to match the outputs. My results were striking:
 - On first try, I got 17 correct matches out of 20 attempts, 2 of the three I missed were stupid mistakes. This is clearly better than random guessing (~3.3 correct matches).
@@ -37,10 +36,23 @@ I created a game, see [here](TODO) with two modes to test how easily LLMs could 
 - Clear patterns emerged to differentiate between models, see [here](#ways-to-differentiate-the-models)
 - The questions I asked can be found [here](#easy-mode-questions)
 
+Before and after answering (with(out) revealed labels):
+
+<img src="https://github.com/user-attachments/assets/b2c621a3-11db-45b9-8902-616008418df3" alt="drawing" width="300"/>
+<img src="https://github.com/user-attachments/assets/c292e54b-7ce7-4b7f-8be8-fbde24b310a5" alt="drawing" width="300"/>
+
+
 **Hard Mode**: Players have to identify LLMs without seeing multiple responses. After playing the easy mode for 20 questions, I did this hard mode and received:
 - 13 correct matches out of 20 attempts
 - Far above the random chance of roughly 3.3 correct matches
 - The questions I asked can be found [here](#hard-mode-questions)
+
+
+Before and after answering (with(out) revealed labels):
+
+<img src="https://github.com/user-attachments/assets/f2bdd4b8-18d3-4bc6-8989-ec1a9330996f" alt="drawing" width="300"/>
+<img src="https://github.com/user-attachments/assets/8143a999-3634-4b94-93e2-e56c7cd63189" alt="drawing" width="300"/>
+
 
 ## Implications
 
