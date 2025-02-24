@@ -68,6 +68,20 @@ Addressing deliberate manipulation would be more challenging, as it could lead t
 However, we believe that reputable AI research labs would avoid such practices, given the potentially devastating long-term consequences to their credibility.
 
 
+## Cite this work
+
+If you use this work, please cite it as below:
+
+```
+@software{Muller_Are_LMARENA_AI_Scores_2025,
+author = {Müller, Samuel},
+month = feb,
+title = {{Are LMARENA.AI Scores Skewed by Industry Insiders?}},
+version = {1.0.0},
+year = {2025}
+}
+```
+
 ## Ways to differentiate the models
 
 ### Formatting Patterns
